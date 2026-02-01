@@ -69,7 +69,6 @@ export default function ProductsAdminPage() {
             Manage your product catalog
           </p>
         </div>
-        {/*//@ts-expect-error dev*/}
         <Link href="/admin/products/new">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
@@ -103,7 +102,6 @@ export default function ProductsAdminPage() {
             <div className="text-center py-12">
               <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">No products found</p>
-              {/*//@ts-expect-error dev*/}
               <Link href="/admin/products/new" className="mt-4 inline-block">
                 <Button variant="outline">
                   <Plus className="h-4 w-4 mr-2" />
@@ -149,7 +147,6 @@ export default function ProductsAdminPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end space-x-2">
-                        {/*//@ts-expect-error dev*/}
                         <Link href={`/admin/products/${product._id}/edit`}>
                           <Button variant="ghost" size="icon">
                             <Edit className="h-4 w-4" />
