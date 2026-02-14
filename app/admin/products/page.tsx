@@ -25,7 +25,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -35,6 +34,7 @@ export default function ProductsAdminPage() {
   const deleteProduct = useMutation(api.products.deleteProduct);
   const [searchQuery, setSearchQuery] = useState("");
   const [deletingId, setDeletingId] = useState<Id<"products"> | null>(null);
+  const [productToDelete, setProductToDelete] = useState<{ _id: Id<"products">; name: string } | null>(null);
 
   if (products === undefined) {
     return (
@@ -57,20 +57,21 @@ export default function ProductsAdminPage() {
       console.error("Failed to delete product:", error);
     } finally {
       setDeletingId(null);
+      setProductToDelete(null);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Products</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Products</h1>
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
             Manage your product catalog
           </p>
         </div>
-        <Link href="/admin/products/new">
-          <Button>
+        <Link href={"/admin/products/new" as any}>
+          <Button className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Add Product
           </Button>
@@ -79,9 +80,9 @@ export default function ProductsAdminPage() {
 
       {/* Search */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-4 sm:pt-6">
           <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search products..."
               value={searchQuery}
@@ -92,8 +93,67 @@ export default function ProductsAdminPage() {
         </CardContent>
       </Card>
 
-      {/* Products Table */}
-      <Card>
+      {/* Mobile Card View */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:hidden gap-4">
+        {filteredProducts.length === 0 ? (
+          <div className="col-span-full text-center py-12">
+            <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">No products found</p>
+            <Link href={"/admin/products/new" as any} className="mt-4 inline-block">
+              <Button variant="outline">
+                <Plus className="h-4 w-4 mr-2" />
+                Add your first product
+              </Button>
+            </Link>
+          </div>
+        ) : (
+          filteredProducts.map((product) => (
+            <Card key={product._id}>
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-medium truncate">{product.name}</h3>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <Badge variant="outline" className="text-xs">
+                        {product.category.replace(/-/g, " ")}
+                      </Badge>
+                      <Badge
+                        variant={product.status === "active" ? "default" : "secondary"}
+                        className="text-xs"
+                      >
+                        {product.status}
+                      </Badge>
+                      {product.featured && (
+                        <Badge variant="default" className="bg-yellow-500 text-xs">
+                          Featured
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <Link href={`/admin/products/${product._id}/edit` as any}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setProductToDelete({ _id: product._id, name: product.name })}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <Card className="hidden lg:block">
         <CardHeader>
           <CardTitle>All Products ({filteredProducts.length})</CardTitle>
         </CardHeader>
@@ -102,7 +162,7 @@ export default function ProductsAdminPage() {
             <div className="text-center py-12">
               <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">No products found</p>
-              <Link href="/admin/products/new" className="mt-4 inline-block">
+              <Link href={"/admin/products/new" as any} className="mt-4 inline-block">
                 <Button variant="outline">
                   <Plus className="h-4 w-4 mr-2" />
                   Add your first product
@@ -147,40 +207,18 @@ export default function ProductsAdminPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end space-x-2">
-                        <Link href={`/admin/products/${product._id}/edit`}>
+                        <Link href={`/admin/products/${product._id}/edit` as any}>
                           <Button variant="ghost" size="icon">
                             <Edit className="h-4 w-4" />
                           </Button>
                         </Link>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Product</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete &quot;{product.name}&quot;? This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDelete(product._id)}
-                                disabled={deletingId === product._id}
-                                className="bg-red-500 hover:bg-red-600"
-                              >
-                                {deletingId === product._id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  "Delete"
-                                )}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setProductToDelete({ _id: product._id, name: product.name })}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -190,6 +228,32 @@ export default function ProductsAdminPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Dialog */}
+      <AlertDialog open={!!productToDelete} onOpenChange={() => setProductToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Product</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete &quot;{productToDelete?.name}&quot;? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => productToDelete && handleDelete(productToDelete._id)}
+              disabled={deletingId === productToDelete?._id}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {deletingId === productToDelete?._id ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
